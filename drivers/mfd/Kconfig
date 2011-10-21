@@ -576,6 +576,16 @@ config EZX_PCAP
 	  This enables the PCAP ASIC present on EZX Phones. This is
 	  needed for MMC, TouchScreen, Sound, USB, etc..
 
+config LX_PCON
+	bool "NetBook Pro PCON driver."
+	depends on I2C=y && MACH_NETBOOKPRO
+	default y
+	help
+	  The LX PCON driver is required to communicate with NetBook
+	  Pro power control device. This device is the heart
+	  of the system, providing power management and keyboard
+	  handling for the system.
+
 config AB8500_CORE
 	bool "ST-Ericsson AB8500 Mixed Signal Power Management chip"
 	depends on GENERIC_HARDIRQS && ABX500_CORE
