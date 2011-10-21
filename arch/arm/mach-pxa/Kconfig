@@ -56,6 +56,14 @@ config MACH_SAARB
 
 comment "Third Party Dev Platforms (sorted by vendor name)"
 
+config MACH_NETBOOKPRO
+	bool "LX Platform"
+	select PXA25x
+	select PXA_SSP
+	help
+	  Say Y here if you intend to run this kernel on a LX
+	  machine.
+
 config ARCH_PXA_IDP
 	bool "Accelent Xscale IDP"
 	select PXA25x
