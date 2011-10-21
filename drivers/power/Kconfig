@@ -57,6 +57,14 @@ config WM8350_POWER
           Say Y here to enable support for the power management unit
 	  provided by the Wolfson Microelectronics WM8350 PMIC.
 
+config LX_POWER
+	tristate "Psion NetBook Pro power driver"
+	depends on MACH_NETBOOKPRO
+	depends on LX_PCON
+	help
+	  Say Y to enable support for the PCON power management unit
+	  on Psion Teklogix Netbook Pro device.
+
 config TEST_POWER
 	tristate "Test power driver"
 	help
