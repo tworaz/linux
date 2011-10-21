@@ -289,6 +289,14 @@ config NVRAM
 	  To compile this driver as a module, choose M here: the
 	  module will be called nvram.
 
+config NVRAM_LX
+	tristate "LX NVRAM support"
+	depends on MACH_NETBOOKPRO && I2C
+	help
+	  Say Y here if you want to access LX NVRAM.
+
+	  If you have a LX platform, you should say Y.
+
 #
 # These legacy RTC drivers just cause too many conflicts with the generic
 # RTC framework ... let's not even try to coexist any more.
