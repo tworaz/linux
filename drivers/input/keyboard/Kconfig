@@ -172,6 +172,15 @@ config KEYBOARD_EP93XX
 	  To compile this driver as a module, choose M here: the
 	  module will be called ep93xx_keypad.
 
+config KEYBOARD_LX
+	tristate "LX Keyboard support"
+	depends on MACH_NETBOOKPRO && INPUT
+	help
+	  Say Y here if you want to use the LX keyboard integrated in
+	  your system.
+
+	  If you have a LX platform, you should say Y.
+
 config KEYBOARD_GPIO
 	tristate "GPIO Buttons"
 	depends on GENERIC_GPIO
