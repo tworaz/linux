@@ -211,6 +211,14 @@ config BATTERY_INTEL_MID
 	  Say Y here to enable the battery driver on Intel MID
 	  platforms.
 
+config BATTERY_LX
+	tristate "Battery driver for Psion Teklogix NetBook Pro"
+	depends on MACH_NETBOOKPRO
+	depends on LX_PCON
+	depends on SPI
+	help
+	  Say Y to enable battery driver on Psion Teklogix NetBook Pro.
+
 config CHARGER_ISP1704
 	tristate "ISP1704 USB Charger Detection"
 	depends on USB_OTG_UTILS
