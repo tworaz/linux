@@ -982,12 +982,14 @@ static int s1d13xxxfb_resume(struct platform_device *dev)
 		/* will write RO regs, *should* get away with it :) */
 		memcpy_toio(s1dfb->regs, s1dfb->regs_save, info->fix.mmio_len);
 		kfree(s1dfb->regs_save);
+		s1dfb->regs_save = NULL;
 	}
 
 	if (s1dfb->disp_save) {
 		memcpy_toio(info->screen_base, s1dfb->disp_save,
 				info->fix.smem_len);
 		kfree(s1dfb->disp_save);	/* XXX kmalloc()'d when? */
+		s1dfb->disp_save = NULL;
 	}
 
 	if ((s1dfb->display & 0x01) != 0)
