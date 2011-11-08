@@ -204,6 +204,9 @@ static int wm97xx_acc_startup(struct wm97xx *wm)
 		/* There is some obscure mutant of WM9712 interbred with WM9713
 		 * used on Palm HW */
 		wm->variant = WM97xx_WM1613;
+	} else if (machine_is_netbookpro()) {
+		pen_int = 1;
+		irq = 4;
 	} else if (machine_is_mainstone() && pen_int)
 		irq = 4;
 
