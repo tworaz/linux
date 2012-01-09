@@ -1723,7 +1723,7 @@ static void pl022_cleanup(struct spi_device *spi)
 }
 
 
-static int __init
+static int
 pl022_probe(struct amba_device *adev, struct amba_id *id)
 {
 	struct device *dev = &adev->dev;
@@ -1976,7 +1976,7 @@ static struct amba_driver pl022_driver = {
 };
 
 
-static int __init pl022_init(void)
+static int __devinit pl022_init(void)
 {
 	return amba_driver_register(&pl022_driver);
 }

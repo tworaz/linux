@@ -1,0 +1,36 @@
+menu "Broadcom BCM2708 Implementations"
+	depends on ARCH_BCM2708
+
+config MACH_BCM2708
+	bool "Broadcom BCM2708 Development Platform"
+	select CPU_V6
+	help
+	  Include support for the Broadcom(R) BCM2708 platform.
+
+config BCM2708_BUTTONS
+	bool "BCM2708 buttons support"
+	depends on MACH_BCM2708
+        select INPUT_POLLDEV
+        default y
+	help
+	 Include support for the Broadcom(R) BCM2708 buttons.
+	 These are accessed via the video co-processor due to hardware restrictions.
+
+config BCM2708_TOUCHSCREEN
+	bool "BCM2708 touchscreen support"
+	depends on MACH_BCM2708
+        select INPUT_POLLDEV
+        default y
+	help
+	 Include support for the Broadcom(R) BCM2708 touchscreen.
+	 This is accessed via the video co-processor due to hardware restrictions.
+
+config BCM2708_LEDS
+	bool "BCM2708 leds support"
+	depends on MACH_BCM2708 && NEW_LEDS && LEDS_CLASS && LEDS_TRIGGERS
+        default y
+	help
+	  Include support for the Broadcom(R) BCM2708 leds. These are accessed via
+	  the video co-processor due to hardware restrictions.
+
+endmenu

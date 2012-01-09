@@ -18,6 +18,7 @@
 #include "../../include/generated/autoconf.h"
 #include "../../include/linux/license.h"
 
+
 /* Some toolchains use a `_' prefix for all user symbols. */
 #ifdef CONFIG_SYMBOL_PREFIX
 #define MODULE_SYMBOL_PREFIX CONFIG_SYMBOL_PREFIX

@@ -240,6 +240,12 @@ struct sdhci_host {
 #define SDHCI_QUIRK_CAP_CLOCK_BASE_BROKEN		(1<<25)
 /* Controller cannot support End Attribute in NOP ADMA descriptor */
 #define SDHCI_QUIRK_NO_ENDATTR_IN_NOPDESC		(1<<26)
+/* Controller reports wrong voltage capability */
+#define SDHCI_QUIRK_CAP_VOLTAGE_BROKEN			(1<<27)
+/* Controller gives spurious CRC errors on ACMD51 */
+#define SDHCI_QUIRK_SPURIOUS_CRC_ACMD51			(1<<28)
+/* Controller gives extra interrupt after multiple-block DMA */
+#define SDHCI_QUIRK_EXTRA_INTS				(1<<29)
 
 	int			irq;		/* Device IRQ */
 	void __iomem *		ioaddr;		/* Mapped address */
@@ -262,6 +268,7 @@ struct sdhci_host {
 #define SDHCI_USE_ADMA		(1<<1)		/* Host is ADMA capable */
 #define SDHCI_REQ_USE_DMA	(1<<2)		/* Use DMA for this req. */
 #define SDHCI_DEVICE_DEAD	(1<<3)		/* Device unresponsive */
+#define SDHCI_USE_PLATDMA	(1<<4)		/* Host uses 3rd party DMA */
 
 	unsigned int		version;	/* SDHCI spec. version */
 
@@ -273,6 +280,7 @@ struct sdhci_host {
 
 	struct mmc_request	*mrq;		/* Current request */
 	struct mmc_command	*cmd;		/* Current command */
+	int			last_cmdop;	/* Opcode of last cmd sent */
 	struct mmc_data		*data;		/* Current data request */
 	unsigned int		data_early:1;	/* Data finished before cmd */
 
@@ -312,6 +320,19 @@ struct sdhci_ops {
 	unsigned int	(*get_max_clock)(struct sdhci_host *host);
 	unsigned int	(*get_min_clock)(struct sdhci_host *host);
 	unsigned int	(*get_timeout_clock)(struct sdhci_host *host);
+
+	int		(*enable)(struct sdhci_host *mmc);
+	int		(*disable)(struct sdhci_host *mmc, int lazy);
+	int		(*set_plat_power)(struct sdhci_host *mmc,
+					  int power_mode);
+
+	int		(*pdma_able)(struct sdhci_host *host,
+				     struct mmc_data *data);
+	void		(*pdma_avail)(struct sdhci_host *host,
+				      unsigned int *ref_intmask,
+				      void(*complete)(struct sdhci_host *));
+	void		(*pdma_reset)(struct sdhci_host *host,
+				      struct mmc_data *data);
 };
 
 #ifdef CONFIG_MMC_SDHCI_IO_ACCESSORS
@@ -414,5 +435,28 @@ extern void sdhci_remove_host(struct sdhci_host *host, int dead);
 extern int sdhci_suspend_host(struct sdhci_host *host, pm_message_t state);
 extern int sdhci_resume_host(struct sdhci_host *host);
 #endif
+
+static inline int /*bool*/
+sdhci_platdma_dmaable(struct sdhci_host *host, struct mmc_data *data)
+{
+	if (host->ops->pdma_able)
+		return host->ops->pdma_able(host, data);
+	else
+		return 1;
+}
+static inline void
+sdhci_platdma_avail(struct sdhci_host *host, unsigned int *ref_intmask,
+		    void(*completion_callback)(struct sdhci_host *))
+{
+	if (host->ops->pdma_avail)
+		host->ops->pdma_avail(host, ref_intmask, completion_callback);
+}
+
+static inline void
+sdhci_platdma_reset(struct sdhci_host *host, struct mmc_data *data)
+{
+	if (host->ops->pdma_reset)
+		host->ops->pdma_reset(host, data);
+}
 
 #endif /* __SDHCI_H */
