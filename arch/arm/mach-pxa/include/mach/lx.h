@@ -1,0 +1,35 @@
+/*
+ * GPIO assignments
+ */
+#define GPIO_LX_BATT_LOW_IRQ	0
+#define GPIO_LX_SUSP_REQ_IRQ	1
+
+#define GPIO_LX_MMC_DET		9
+
+#define GPIO_LX_USBH_IRQ	2
+#define GPIO_LX_USBH_RST	14
+
+#define GPIO_LX_USBC_PULL	60
+
+#define GPIO_LX_NAND_RDY	20
+#define GPIO_LX_NAND_CLE	21
+#define GPIO_LX_NAND_ALE	22
+#define GPIO_LX_NAND_NWP	61
+#define GPIO_LX_NAND_NCE	62
+
+#define GPIO_LX_IRDA_EN		58
+#define GPIO_LX_IRDA_MODE	59
+
+#define GPIO_LX_NHEADPHONES	3
+#define GPIO_LX_PENDET		4
+#define GPIO_LX_AC97_RST	63
+#define GPIO_LX_SPKR_OFF	65
+
+#define GPIO_LX_CF_RST		70
+#define GPIO_LX_CF_RDY		71
+#define GPIO_LX_CF_STATUS	72
+#define GPIO_LX_CF_DETECT	73
+#define GPIO_LX_PCMCIA_RST	74
+#define GPIO_LX_PCMCIA_DETECT	75
+#define GPIO_LX_PCMCIA_STATUS	76
+#define GPIO_LX_PCMCIA_RDY	77
