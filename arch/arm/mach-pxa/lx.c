@@ -689,7 +689,6 @@ static void __init lx_init(void)
 
 MACHINE_START(NETBOOKPRO, "Psion Teklogix NetBook Pro")
 	/* Maintainer: Ben Dooks, Vincent Sanders. Simtec Electronics <linux@simtec.co.uk> */
-	.boot_params	= 0xa0200100,
 	.map_io		= pxa25x_map_io,
 	.reserve	= lx_reserve,
 	.init_irq	= pxa25x_init_irq,
