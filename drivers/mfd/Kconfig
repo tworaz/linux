@@ -583,6 +583,16 @@ config AB5500_DEBUG
 	  Select this option if you want debug information from the AB5500
 	  using the debug filesystem, debugfs.
 
+config LX_PCON
+	bool "NetBook Pro PCON driver."
+	depends on I2C=y && MACH_NETBOOKPRO
+	default y
+	help
+	  The LX PCON driver is required to communicate with NetBook
+	  Pro power control device. This device is the heart
+	  of the system, providing power management and keyboard
+	  handling for the system.
+
 config AB8500_CORE
 	bool "ST-Ericsson AB8500 Mixed Signal Power Management chip"
 	depends on GENERIC_HARDIRQS && ABX500_CORE
