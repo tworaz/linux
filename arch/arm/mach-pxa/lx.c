@@ -631,7 +631,7 @@ static struct gpio_default_state {
 	{ GPIO_LX_NAND_NWP,  0, NULL },		/* NAND write protected */
 	{ GPIO_LX_NAND_NCE,  1, NULL },		/* NAND not selected */
 	{ GPIO_LX_AC97_RST,  1, NULL },		/* Release AC97 reset */
-	{ GPIO_LX_SPKR_OFF,  1, NULL }		/* Power down speaker */
+	{ GPIO_LX_SPKR_OFF,  1, "Speaker off" }	/* Power down speaker */
 };
 
 static void __init lx_reserve(void)
