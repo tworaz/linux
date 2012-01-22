@@ -131,6 +131,9 @@ static unsigned short fn_map[LX_NUMKEYCODES] = {
 	[0x28]	= KEY_BRIGHTNESSDOWN,
 	[0x5f]	= KEY_BRIGHTNESSUP,
 	[0x5b]	= KEY_SUSPEND,
+	[0x1e]  = KEY_LEFTBRACE,
+	[0x11]  = KEY_RIGHTBRACE,
+	[0x36]  = KEY_EURO,
 };
 
 /*
