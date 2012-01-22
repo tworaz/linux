@@ -21,6 +21,8 @@
 #define LX_PCON_BATTINFO_MAGIC		(0xADB0)
 #define LX_PCON_BATTINFO_MAGIC_SWAPPED	(0xB0AD)
 
+#define ENERGY_RESCALE_FACTOR 1000000
+
 /* This structure should be 32bytes long. */
 struct power_state {
 	u16	flags;
@@ -161,14 +163,22 @@ static int lx_main_battery_get_prop(struct power_supply *psy,
 	int ret = 0;
 
 	switch (psp) {
-	case POWER_SUPPLY_PROP_ONLINE:
-		val->intval = (state->flags & POWER_FLAG_BatteryPresent);
+	case POWER_SUPPLY_PROP_PRESENT:
+		val->intval = !!(state->flags & POWER_FLAG_BatteryPresent);
 		break;
 	case POWER_SUPPLY_PROP_STATUS:
 		lx_battery_get_status(state, &val->intval);
 		break;
-	case POWER_SUPPLY_PROP_CAPACITY:
-		val->intval = state->main_batt_capacity_percent;
+	case POWER_SUPPLY_PROP_ENERGY_FULL:
+	case POWER_SUPPLY_PROP_ENERGY_FULL_DESIGN:
+		val->intval = 100 * ENERGY_RESCALE_FACTOR;
+		break;
+	case POWER_SUPPLY_PROP_ENERGY_EMPTY:
+	case POWER_SUPPLY_PROP_ENERGY_EMPTY_DESIGN:
+		val->intval = 0;
+		break;
+	case POWER_SUPPLY_PROP_ENERGY_NOW:
+		val->intval = (state->main_batt_capacity_percent * ENERGY_RESCALE_FACTOR);
 		break;
 	case POWER_SUPPLY_PROP_TEMP:
 		val->intval = (state->temperature - 273) * 10;
@@ -194,9 +204,13 @@ static int lx_main_battery_get_prop(struct power_supply *psy,
 }
 
 static enum power_supply_property lx_main_battery_props[] = {
-	POWER_SUPPLY_PROP_ONLINE,
+	POWER_SUPPLY_PROP_PRESENT,
 	POWER_SUPPLY_PROP_STATUS,
-	POWER_SUPPLY_PROP_CAPACITY,
+	POWER_SUPPLY_PROP_ENERGY_FULL,
+	POWER_SUPPLY_PROP_ENERGY_FULL_DESIGN,
+	POWER_SUPPLY_PROP_ENERGY_EMPTY,
+	POWER_SUPPLY_PROP_ENERGY_EMPTY_DESIGN,
+	POWER_SUPPLY_PROP_ENERGY_NOW,
 	POWER_SUPPLY_PROP_TEMP,
 	POWER_SUPPLY_PROP_CURRENT_NOW,
 	POWER_SUPPLY_PROP_TIME_TO_EMPTY_NOW,
@@ -213,11 +227,19 @@ static int lx_backup_battery_get_prop(struct power_supply *psy,
 	int ret = 0;
 
 	switch (psp) {
-	case POWER_SUPPLY_PROP_ONLINE:
+	case POWER_SUPPLY_PROP_PRESENT:
 		val->intval = !!(state->flags & POWER_FLAG_BackupBatteryPresent);
 		break;
-	case POWER_SUPPLY_PROP_CAPACITY:
-		val->intval = state->backup_batt_capacity_percent;
+	case POWER_SUPPLY_PROP_ENERGY_FULL:
+	case POWER_SUPPLY_PROP_ENERGY_FULL_DESIGN:
+		val->intval = 100 * ENERGY_RESCALE_FACTOR;
+		break;
+	case POWER_SUPPLY_PROP_ENERGY_EMPTY:
+	case POWER_SUPPLY_PROP_ENERGY_EMPTY_DESIGN:
+		val->intval = 0;
+		break;
+	case POWER_SUPPLY_PROP_ENERGY_NOW:
+		val->intval = (state->backup_batt_capacity_percent * ENERGY_RESCALE_FACTOR);
 		break;
 	case POWER_SUPPLY_PROP_VOLTAGE_NOW:
 		val->intval = (state->backup_batt_voltage * 1000);
@@ -231,8 +253,12 @@ static int lx_backup_battery_get_prop(struct power_supply *psy,
 }
 
 static enum power_supply_property lx_backup_battery_props[] = {
-	POWER_SUPPLY_PROP_ONLINE,
-	POWER_SUPPLY_PROP_CAPACITY,
+	POWER_SUPPLY_PROP_PRESENT,
+	POWER_SUPPLY_PROP_ENERGY_FULL,
+	POWER_SUPPLY_PROP_ENERGY_FULL_DESIGN,
+	POWER_SUPPLY_PROP_ENERGY_EMPTY,
+	POWER_SUPPLY_PROP_ENERGY_EMPTY_DESIGN,
+	POWER_SUPPLY_PROP_ENERGY_NOW,
 	POWER_SUPPLY_PROP_VOLTAGE_NOW,
 };
 
