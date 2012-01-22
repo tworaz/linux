@@ -1840,8 +1840,8 @@ int input_register_device(struct input_dev *dev)
 	if (!dev->rep[REP_DELAY] && !dev->rep[REP_PERIOD]) {
 		dev->timer.data = (long) dev;
 		dev->timer.function = input_repeat_key;
-		dev->rep[REP_DELAY] = 250;
-		dev->rep[REP_PERIOD] = 33;
+		dev->rep[REP_DELAY] = 700;
+		dev->rep[REP_PERIOD] = 90;
 	}
 
 	if (!dev->getkeycode)
