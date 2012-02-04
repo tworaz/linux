@@ -21,23 +21,23 @@
 #define LX_PCON_BATTINFO_MAGIC		(0xADB0)
 #define LX_PCON_BATTINFO_MAGIC_SWAPPED	(0xB0AD)
 
-#define ENERGY_RESCALE_FACTOR 1000000
+#define ENERGY_RESCALE_SHIFT 20
 
 /* This structure should be 32bytes long. */
 struct power_state {
-	u16	flags;
-	u16	unused[4];
-	u16	max_capacity;
-	u16	temperature;
-	u16	charge_state;
-	u16	main_batt_voltage;
-	u16	backup_batt_voltage;
-	u8	main_batt_capacity_percent;
-	u8	backup_batt_capacity_percent;
-	u16	charge_current;
-	u16	discharge_current;
-	u16	pad[2];
-	u16	magic;
+	uint16_t	flags;
+	uint16_t	unused[4];
+	uint16_t	max_capacity;
+	uint16_t	temperature;
+	uint16_t	charge_state;
+	uint16_t	main_batt_voltage;
+	uint16_t	backup_batt_voltage;
+	uint8_t		main_batt_percent;
+	uint8_t		backup_batt_percent;
+	uint16_t	charge_current;
+	uint16_t	discharge_current;
+	uint16_t	pad[2];
+	uint16_t	magic;
 } __attribute__((__packed__));
 
 enum {
@@ -66,6 +66,10 @@ struct driver_data {
 
 	struct task_struct 	*thread;
 	struct power_state	pwr_state;
+	bool			ac_present;
+	bool			backup_present;
+	uint16_t		backup_voltage;
+	uint16_t		backup_percentage;
 	struct mutex		pwr_state_lock;
 
 	struct power_supply 	wall;
@@ -110,7 +114,7 @@ static void lx_battery_time_to_empty(const struct power_state *state, int *sec)
 		*sec = 0;
 	} else {
 		*sec = state->max_capacity *
-			state->main_batt_capacity_percent * 36 /
+			state->main_batt_percent * 36 /
 			state->discharge_current;
 	}
 }
@@ -119,7 +123,7 @@ static void lx_battery_time_to_full(const struct power_state *state, int *sec)
 {
 	if (state->charge_state == CHARGE_STATE_Charging && state->charge_current) {
 		*sec = state->max_capacity *
-			(100 - state->main_batt_capacity_percent) * 36 /
+			(100 - state->main_batt_percent) * 36 /
 			state->charge_current;
 	} else {
 		*sec = 0;
@@ -138,7 +142,7 @@ static int lx_wall_get_prop(struct power_supply *psy,
 
 	switch (psp) {
 	case POWER_SUPPLY_PROP_ONLINE:
-		val->intval = (bdata->pwr_state.flags & POWER_FLAG_ACPresent);
+		val->intval = bdata->ac_present;
 		break;
 	default:
 		ret = -EINVAL;
@@ -162,6 +166,8 @@ static int lx_main_battery_get_prop(struct power_supply *psy,
 	struct power_state *state = &bdata->pwr_state;
 	int ret = 0;
 
+	mutex_lock(&bdata->pwr_state_lock);
+
 	switch (psp) {
 	case POWER_SUPPLY_PROP_PRESENT:
 		val->intval = !!(state->flags & POWER_FLAG_BatteryPresent);
@@ -171,14 +177,14 @@ static int lx_main_battery_get_prop(struct power_supply *psy,
 		break;
 	case POWER_SUPPLY_PROP_ENERGY_FULL:
 	case POWER_SUPPLY_PROP_ENERGY_FULL_DESIGN:
-		val->intval = 100 * ENERGY_RESCALE_FACTOR;
+		val->intval = (100 << ENERGY_RESCALE_SHIFT);
 		break;
 	case POWER_SUPPLY_PROP_ENERGY_EMPTY:
 	case POWER_SUPPLY_PROP_ENERGY_EMPTY_DESIGN:
 		val->intval = 0;
 		break;
 	case POWER_SUPPLY_PROP_ENERGY_NOW:
-		val->intval = (state->main_batt_capacity_percent * ENERGY_RESCALE_FACTOR);
+		val->intval = (state->main_batt_percent << ENERGY_RESCALE_SHIFT);
 		break;
 	case POWER_SUPPLY_PROP_TEMP:
 		val->intval = (state->temperature - 273) * 10;
@@ -199,6 +205,8 @@ static int lx_main_battery_get_prop(struct power_supply *psy,
 		ret = -EINVAL;
 		break;
 	}
+
+	mutex_unlock(&bdata->pwr_state_lock);
 
 	return ret;
 }
@@ -223,31 +231,34 @@ static int lx_backup_battery_get_prop(struct power_supply *psy,
 			              union power_supply_propval *val)
 {
 	struct driver_data *bdata = dev_get_drvdata(psy->dev->parent);
-	struct power_state *state = &bdata->pwr_state;
 	int ret = 0;
+
+	mutex_lock(&bdata->pwr_state_lock);
 
 	switch (psp) {
 	case POWER_SUPPLY_PROP_PRESENT:
-		val->intval = !!(state->flags & POWER_FLAG_BackupBatteryPresent);
+		val->intval = bdata->backup_present;
 		break;
 	case POWER_SUPPLY_PROP_ENERGY_FULL:
 	case POWER_SUPPLY_PROP_ENERGY_FULL_DESIGN:
-		val->intval = 100 * ENERGY_RESCALE_FACTOR;
+		val->intval = 100 << ENERGY_RESCALE_SHIFT;
 		break;
 	case POWER_SUPPLY_PROP_ENERGY_EMPTY:
 	case POWER_SUPPLY_PROP_ENERGY_EMPTY_DESIGN:
 		val->intval = 0;
 		break;
 	case POWER_SUPPLY_PROP_ENERGY_NOW:
-		val->intval = (state->backup_batt_capacity_percent * ENERGY_RESCALE_FACTOR);
+		val->intval = (bdata->backup_percentage << ENERGY_RESCALE_SHIFT);
 		break;
 	case POWER_SUPPLY_PROP_VOLTAGE_NOW:
-		val->intval = (state->backup_batt_voltage * 1000);
+		val->intval = (bdata->backup_voltage * 1000);
 		break;
 	default:
 		ret = -EINVAL;
 		break;
 	}
+
+	mutex_unlock(&bdata->pwr_state_lock);
 
 	return ret;
 }
@@ -287,6 +298,30 @@ err_wall:
 	power_supply_unregister(&data->wall);
 
 	return ret;
+}
+
+static void lx_battery_update_state(struct driver_data *drv_data)
+{
+	struct power_state *state = &(drv_data->pwr_state);
+	bool ac_present = state->flags & POWER_FLAG_ACPresent;
+	bool backup_present = !!(state->flags & POWER_FLAG_BackupBatteryPresent);
+
+	if (ac_present != drv_data->ac_present) {
+		drv_data->ac_present = ac_present;
+		power_supply_changed(&drv_data->wall);
+	}
+
+	if ((backup_present != drv_data->backup_present)
+	    || (drv_data->backup_voltage != state->backup_batt_voltage)
+	    || (drv_data->backup_percentage != state->backup_batt_percent)) {
+
+		drv_data->backup_present = backup_present;
+		drv_data->backup_voltage = state->backup_batt_voltage;
+		drv_data->backup_percentage = state->backup_batt_percent;
+		power_supply_changed(&drv_data->backup_battery);
+	}
+
+	power_supply_changed(&drv_data->main_battery);
 }
 
 static int lx_battery_thread(void *param)
@@ -349,6 +384,9 @@ batt_thread_wait:
 			res |= (tmp << 8);
 			dst[count] = res;
 		}
+		if (data->ps_registered) {
+			lx_battery_update_state(data);
+		}
 		mutex_unlock(&data->pwr_state_lock);
 
 		failcount = 0;
@@ -359,6 +397,9 @@ batt_thread_wait:
 				        " sub-drivers!\n");
 				break;
 			}
+			mutex_lock(&data->pwr_state_lock);
+			lx_battery_update_state(data);
+			mutex_unlock(&data->pwr_state_lock);
 		}
 	}
 
@@ -423,6 +464,11 @@ static int __devinit lx_battery_probe(struct spi_device *spi)
 	data->spi_xfer.rx_buf = &data->spi_rxbuf;
 	data->spi_xfer.len = sizeof(struct power_state);
 	data->spi_xfer.bits_per_word = 16;
+
+	data->ac_present = false;
+	data->backup_present = true;
+	data->backup_voltage = 3000; // 2 x AAA batteries
+	data->backup_percentage = 100;
 
 	spi_message_init(&data->spi_rx_msg);
 	spi_message_add_tail(&data->spi_xfer, &data->spi_rx_msg);
