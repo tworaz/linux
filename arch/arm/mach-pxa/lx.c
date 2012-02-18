@@ -598,6 +598,7 @@ static void lx_icp_mode(struct device *dev, int mode)
 }
 
 static struct pxaficp_platform_data lx_icp_info = {
+	.gpio_pwdown		= -1,
 	.transceiver_cap	= IR_SIRMODE | IR_FIRMODE | IR_OFF,
 	.transceiver_mode	= lx_icp_mode,
 };
